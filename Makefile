@@ -1,16 +1,21 @@
-CFLAGS  = -Wall -Werror -pedantic -std=c99 -O3
+CFLAGS  = -Wall -Wextra -Werror -ansi -pedantic -std=c99 -O3
 LDFLAGS = -O3
-EXEC    = tls
-SRC     = $(wildcard *.c)
+TARGET  = tls
+SRC     = main.c network.c tls.c
 OBJ     = $(SRC:.c=.o)
 
-all: $(EXEC)
+all: $(TARGET)
 
-$(EXEC): $(OBJ)
-	gcc $(LDFLAGS) $(OBJ) -o $(EXEC)
+$(TARGET): $(OBJ)
+	gcc $(LDFLAGS) $^ -o $@
 
-%.o: %.c *.h
+%.o: %.c
 	gcc $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(EXEC) $(OBJ)
+	rm -f $(OBJ)
+
+destroy: clean
+	rm -f $(TARGET)
+
+rebuild: destroy all
