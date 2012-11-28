@@ -1,7 +1,7 @@
-CFLAGS  = -Wall -Wextra -Werror -ansi -pedantic -std=c99 -O3
+CFLAGS  = -Wall -Wextra -Werror -ansi -pedantic -std=c99 -O3 -D_XOPEN_SOURCE=600
 LDFLAGS = -O3
 TARGET  = tls
-SRC     = main.c network.c tls.c
+SRC     = main.c socket.c tls.c
 OBJ     = $(SRC:.c=.o)
 
 all: $(TARGET)

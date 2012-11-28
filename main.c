@@ -1,13 +1,17 @@
-#include "network.h"
+#include <stdio.h>
+#include <unistd.h>
+
+#include "socket.h"
 #include "tls.h"
 
-#include <stdio.h>
-
-int main()
+int main(int argc, char** argv)
 {
-	int sock = listenAt(4242);
+	(void) argc;
+	(void) argv;
+
+	int sock = TCP_Listen("4242");
 	int client;
-	while ((client = accept(sock, NULL, NULL)) >= 0)
+	while ((client = TCP_Accept(sock)))
 	{
 		printf("Got a client\n");
 		get_clientHello(client);
