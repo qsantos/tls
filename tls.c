@@ -4,7 +4,129 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <arpa/inet.h>
+#include <assert.h>
+#include <fcntl.h>
 
+void TLS_RecordHeader(int sock, uint8_t type, uint16_t length)
+{
+	RecordHeader tmp = { type, {0x03, 0x03}, length };
+	write(sock, &tmp, sizeof(RecordHeader));
+}
+
+void TLS_HandshakeHeader(int sock, uint8_t type, uint32_t length)
+{
+	TLS_RecordHeader(sock, handshake, length + 4);
+	HandshakeHeader tmp = { type, {0,0} }; //length };
+	write(sock, &tmp, sizeof(HandshakeHeader) - 1); // uint32_t -> uint24_t
+}
+
+void TLS_ClientHello(int sock, int avail)
+{
+	ClientHelloHeader tmp;
+	read(sock, &tmp, sizeof(tmp));
+	avail -= sizeof(tmp);
+	printf("%i:%i\n", tmp.client_version.major, tmp.client_version.minor);
+
+	uint8_t n_ids;
+	read(sock, &n_ids, sizeof(n_ids));
+	uint8_t* ids = (uint8_t*) malloc(100 + n_ids);
+	read(sock, ids, n_ids);
+	avail -= 1 + n_ids;
+
+	uint16_t n_suites;
+	read(sock, &n_suites, sizeof(n_suites));
+	n_suites = ntohs(n_suites);
+	CipherSuite* suites = (CipherSuite*) malloc(100 + n_suites);
+	read(sock, suites, n_suites);
+	avail -= 2 + n_suites;
+
+	uint8_t n_methods;
+	read(sock, &n_methods, sizeof(n_methods));
+	CompressionMethod* methods = (CompressionMethod*) malloc(100 + n_methods);
+	read(sock, methods, n_methods);
+	avail -= 1 + n_methods;
+
+	if (avail)
+	{
+		uint16_t n_extensions;
+		read(sock, &n_extensions, sizeof(n_extensions));
+		n_extensions = ntohs(n_extensions);
+		printf("Extensions: %i\n", n_extensions);
+	}
+
+	printf("Done\n");
+	printf("%i %i %i\n", n_ids, n_suites, n_methods);
+
+	free(methods);
+	free(suites);
+	free(ids);
+}
+
+void get_clientHello(int sock)
+{
+	RecordHeader tmp;
+	read(sock, &tmp, sizeof(RecordHeader));
+	printf("%i:%i\n", tmp.version.major, tmp.version.minor);
+	printf("rlen = %i\n", ntohs(tmp.length));
+
+	if (tmp.type == handshake)
+	{
+		HandshakeHeader tmp;
+		read(sock, &tmp, sizeof(HandshakeHeader));
+		if (tmp.msg_type == client_hello)
+		{
+			uint32_t* nlen = (uint32_t*) tmp.length;
+			uint32_t len = ntohl(*nlen) >> 8;
+			TLS_ClientHello(sock, len);
+		}
+		else
+			printf("Not client_hello (%i)\n", tmp.msg_type);
+	}
+	else
+		printf("Not handshake (%i)\n", tmp.type);
+
+/*
+	recordHeader head;
+	read(sock, &head, sizeof(head));
+	uint32_t len = (head.length1[0] << 16) | (head.length1[1] << 8) | (head.length1[2] << 0);
+	uint8_t* data = malloc(len);
+	read(sock, data, len);
+	
+	uint8_t* version = data;
+	uint8_t* random  = version + 2;
+	
+	uint8_t* sessionId = random + 32;
+	uint8_t sessionId_size = *sessionId;
+	sessionId += 1;
+	
+	uint8_t* cipherSuites = sessionId + sessionId_size;
+	uint16_t cipherSuites_size = (*cipherSuites << 8) | *(cipherSuites + 1);
+	cipherSuites += 2;
+	uint16_t cipherSuite = 0;
+	for (uint8_t i = 0; !cipherSuite && i < N_MYCIPHERSUITES; i++)
+		for (uint8_t j = 0; j < cipherSuites_size; j+=2)
+			if ( ((cipherSuites[j] << 8) | cipherSuites[j+1]) == mycipherSuites[i])
+			{
+				cipherSuite = mycipherSuites[i];
+				break;
+			}
+	
+	uint8_t* compressionMethods = cipherSuites + cipherSuites_size;
+	uint8_t compressionMethods_size = *compressionMethods;
+	compressionMethods += 1;
+	
+	uint8_t* extensions = compressionMethods + compressionMethods_size;
+	if (data + len > extensions)
+	{
+		uint16_t extensions_size = (*extensions << 8) | *(extensions + 1);
+		extensions += 2;
+		printf("extensions_size = %d\n", extensions_size);
+	}
+*/
+}
+
+/*
 NetMsg* NetMsg_new()
 {
 	NetMsg* ret = malloc(sizeof(NetMsg));
@@ -38,7 +160,7 @@ void NetMsg_push32(NetMsg* msg, uint32_t v)
 	NetMsg_push8(msg, (v >>  0) & 0xFF);
 }
 
-void NetMsg_send(NetMsg* msg, int sock, ContentType type0, HandshakeType type1)
+void NetMsg_send(NetMsg* msg, int sock, uint8_t type0, uint8_t type1)
 {
 	// record
 	msg->buffer[0] = type0;
@@ -149,7 +271,6 @@ void get_clientHello(int sock)
 		printf("extensions_size = %d\n", extensions_size);
 	}
 	
-	
 	puts("client_hello got");
 	
 	
@@ -171,3 +292,4 @@ void get_clientHello(int sock)
 	//NetMsg* msg = NetMsg_new();
 	//NetMsg_send(msg, sock, handshake, certificate);
 }
+*/
