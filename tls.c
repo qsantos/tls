@@ -38,7 +38,7 @@ void NetMsg_push32(NetMsg* msg, uint32_t v)
 	NetMsg_push8(msg, (v >>  0) & 0xFF);
 }
 
-void NetMsg_send(NetMsg* msg, int sock, uint8_t type0, uint8_t type1)
+void NetMsg_send(NetMsg* msg, int sock, ContentType type0, HandshakeType type1)
 {
 	// record
 	msg->buffer[0] = type0;
@@ -98,7 +98,7 @@ void send_clientHello(int sock)
 	for (uint8_t i = 0; i < sizeof(compressionMethods); i++)
 		NetMsg_push8(msg, compressionMethods[i]);
 	
-	NetMsg_send(msg, sock, 0x16, 0x01); // handshake / client_hello
+	NetMsg_send(msg, sock, handshake, client_hello);
 }
 
 typedef struct
@@ -163,11 +163,11 @@ void get_clientHello(int sock)
 	NetMsg_push8(msg, 0); // session id
 	NetMsg_push16(msg, cipherSuite); // cipher suite
 	NetMsg_push8(msg, 0); // compression method
-	NetMsg_send(msg, sock, 0x16, 0x02); // handshake / server_hello
+	NetMsg_send(msg, sock, handshake, server_hello);
 	
 	puts("server_hello sent");
 	
 	free(data);
 	//NetMsg* msg = NetMsg_new();
-	//NetMsg_send(msg, sock, 0x16, 0x0b); // handshake / certificate
+	//NetMsg_send(msg, sock, handshake, certificate);
 }
