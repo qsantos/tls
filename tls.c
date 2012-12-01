@@ -63,6 +63,25 @@ void TLS_ClientHello(int sock, int avail)
 	free(ids);
 }
 
+void TLS_Handshake(int sock)
+{
+	HandshakeHeader tmp;
+	read(sock, &tmp, sizeof(HandshakeHeader));
+	switch (tmp.msg_type)
+	{
+	case client_hello:
+	{
+		uint32_t* nlen = (uint32_t*) tmp.length;
+		uint32_t len = ntohl(*nlen) >> 8;
+		TLS_ClientHello(sock, len);
+		break;
+	}
+	default:
+		printf("Not client_hello (%i)\n", tmp.msg_type);
+		break;
+	}
+}
+
 void get_clientHello(int sock)
 {
 	RecordHeader tmp;
@@ -70,60 +89,14 @@ void get_clientHello(int sock)
 	printf("%i:%i\n", tmp.version.major, tmp.version.minor);
 	printf("rlen = %i\n", ntohs(tmp.length));
 
-	if (tmp.type == handshake)
+	switch (tmp.type)
 	{
-		HandshakeHeader tmp;
-		read(sock, &tmp, sizeof(HandshakeHeader));
-		if (tmp.msg_type == client_hello)
-		{
-			uint32_t* nlen = (uint32_t*) tmp.length;
-			uint32_t len = ntohl(*nlen) >> 8;
-			TLS_ClientHello(sock, len);
-		}
-		else
-			printf("Not client_hello (%i)\n", tmp.msg_type);
-	}
-	else
+	case handshake:
+		TLS_Handshake(sock);
+		break;
+	default:
 		printf("Not handshake (%i)\n", tmp.type);
-
-/*
-	recordHeader head;
-	read(sock, &head, sizeof(head));
-	uint32_t len = (head.length1[0] << 16) | (head.length1[1] << 8) | (head.length1[2] << 0);
-	uint8_t* data = malloc(len);
-	read(sock, data, len);
-	
-	uint8_t* version = data;
-	uint8_t* random  = version + 2;
-	
-	uint8_t* sessionId = random + 32;
-	uint8_t sessionId_size = *sessionId;
-	sessionId += 1;
-	
-	uint8_t* cipherSuites = sessionId + sessionId_size;
-	uint16_t cipherSuites_size = (*cipherSuites << 8) | *(cipherSuites + 1);
-	cipherSuites += 2;
-	uint16_t cipherSuite = 0;
-	for (uint8_t i = 0; !cipherSuite && i < N_MYCIPHERSUITES; i++)
-		for (uint8_t j = 0; j < cipherSuites_size; j+=2)
-			if ( ((cipherSuites[j] << 8) | cipherSuites[j+1]) == mycipherSuites[i])
-			{
-				cipherSuite = mycipherSuites[i];
-				break;
-			}
-	
-	uint8_t* compressionMethods = cipherSuites + cipherSuites_size;
-	uint8_t compressionMethods_size = *compressionMethods;
-	compressionMethods += 1;
-	
-	uint8_t* extensions = compressionMethods + compressionMethods_size;
-	if (data + len > extensions)
-	{
-		uint16_t extensions_size = (*extensions << 8) | *(extensions + 1);
-		extensions += 2;
-		printf("extensions_size = %d\n", extensions_size);
 	}
-*/
 }
 
 /*
