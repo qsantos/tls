@@ -45,33 +45,42 @@ typedef struct __attribute__((packed))
 } Random;
 
 typedef uint8_t CipherSuite[2];
-
 typedef uint8_t CompressionMethod;
+typedef uint8_t Extension;
 
 typedef struct __attribute__((packed))
 {
 	ProtocolVersion client_version;
 	Random          random;
-} ClientHelloHeader;
 
-void get_clientHello(int sock);
+	uint8_t  n_session_id;
+	uint8_t* session_id;
 
-/*
+	uint16_t     n_cipher_suites;
+	CipherSuite* cipher_suites;
+
+	uint8_t            n_compression_methods;
+	CompressionMethod* compression_methods;
+
+	int16_t    n_extensions;
+	Extension* extensions;
+} ClientHello;
+
 typedef struct __attribute__((packed))
 {
-uint8_t* buffer;
-uint32_t available;
-uint32_t i;
-} NetMsg;
+	ProtocolVersion server_version;
+	Random          random;
 
-NetMsg* NetMsg_new   ();
-void    NetMsg_push8 (NetMsg* msg, uint8_t  v);
-void    NetMsg_push16(NetMsg* msg, uint16_t v);
-void    NetMsg_push32(NetMsg* msg, uint32_t v);
-void    NetMsg_send  (NetMsg* msg, int sock, uint8_t type0, uint8_t type1);
+	uint8_t  n_session_id;
+	uint8_t* session_id;
 
-void send_clientHello(int sock);
-void get_clientHello (int sock);
-*/
+	CipherSuite       cipher_suite;
+	CompressionMethod compression_method;
+
+	int8_t   n_extensions;
+	uint8_t* extensions;
+} ServerHello;
+
+void get_clientHello(int sock);
 
 #endif
