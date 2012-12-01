@@ -16,7 +16,7 @@ void TLS_RecordHeader(int sock, uint8_t type, uint16_t length)
 
 void TLS_HandshakeHeader(int sock, uint8_t type, uint32_t length)
 {
-	TLS_RecordHeader(sock, handshake, length + 4);
+	TLS_RecordHeader(sock, HANDSHAKE, length + 4);
 	HandshakeHeader tmp = { type, {0,0} }; //length };
 	write(sock, &tmp, sizeof(HandshakeHeader) - 1); // uint32_t -> uint24_t
 }
@@ -69,7 +69,7 @@ void TLS_Handshake(int sock)
 	read(sock, &tmp, sizeof(HandshakeHeader));
 	switch (tmp.msg_type)
 	{
-	case client_hello:
+	case CLIENT_HELLO:
 	{
 		uint32_t* nlen = (uint32_t*) tmp.length;
 		uint32_t len = ntohl(*nlen) >> 8;
@@ -91,7 +91,7 @@ void get_clientHello(int sock)
 
 	switch (tmp.type)
 	{
-	case handshake:
+	case HANDSHAKE:
 		TLS_Handshake(sock);
 		break;
 	default:

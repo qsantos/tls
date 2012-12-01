@@ -9,10 +9,10 @@ typedef struct __attribute__((packed))
 	uint8_t minor;
 } ProtocolVersion;
 
-#define change_cipher_spec 20
-#define alert              21
-#define handshake          22
-#define application_data   23
+#define CHANGE_CIPHER_SPEC 20
+#define ALERT              21
+#define HANDSHAKE          22
+#define APPLICATION_DATA   23
 
 typedef struct __attribute__((packed))
 {
@@ -21,16 +21,16 @@ typedef struct __attribute__((packed))
 	uint16_t        length;
 } RecordHeader;
 
-#define hello_request       0
-#define client_hello        1
-#define server_hello        2
-#define certificate         11
-#define server_key_exchange 12
-#define certificate_request 13
-#define server_hello_done   14
-#define certificate_verify  15
-#define client_key_exchange 16
-#define finished            20
+#define HELLO_REQUEST       0
+#define CLIENT_HELLO        1
+#define SERVER_HELLO        2
+#define CERTIFICATE         11
+#define SERVER_KEY_EXCHANGE 12
+#define CERTIFICATE_REQUEST 13
+#define SERVER_HELLO_DONE   14
+#define CERTIFICATE_VERIFY  15
+#define CLIENT_KEY_EXCHANGE 16
+#define FINISHED            20
 
 typedef struct __attribute__((packed))
 {
