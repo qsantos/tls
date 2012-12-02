@@ -39,8 +39,12 @@ void TLS_ServerHello(int sock, ClientHello* client_hello)
 	server_hello.cipher_suite[1] = 0;
 	server_hello.compression_method = 0;
 
-	server_hello.n_extensions = client_hello->n_extensions;
-	server_hello.extensions   = client_hello->extensions;
+	char ext = client_hello->n_extensions >= 0;
+	if (ext)
+	{
+		server_hello.n_extensions = client_hello->n_extensions;
+		server_hello.extensions   = client_hello->extensions;
+	}
 
 
 	// send TLS message
@@ -50,7 +54,8 @@ void TLS_ServerHello(int sock, ClientHello* client_hello)
 		sizeof(uint8_t) +
 		server_hello.n_session_id +
 		sizeof(CipherSuite) +
-		sizeof(CompressionMethod)
+		sizeof(CompressionMethod) +
+		ext ? 1 + server_hello.n_extensions : 0
 	);
 	write(sock, &server_hello.server_version,     sizeof(ProtocolVersion));
 	write(sock, &server_hello.random,             sizeof(Random));
@@ -58,6 +63,11 @@ void TLS_ServerHello(int sock, ClientHello* client_hello)
 	write(sock, server_hello.session_id,          server_hello.n_session_id);
 	write(sock, &server_hello.cipher_suite,       sizeof(CipherSuite));
 	write(sock, &server_hello.compression_method, sizeof(CompressionMethod));
+	if (ext)
+	{
+		write(sock, &server_hello.n_extensions, sizeof(uint8_t));
+		write(sock, server_hello.extensions,    server_hello.n_extensions);
+	}
 }
 
 #define READ(V)                    \
@@ -100,6 +110,8 @@ void TLS_ClientHello(int sock, int avail)
 
 	printf("Done\n");
 	printf("%i %i %i\n", hello.n_session_id, hello.n_cipher_suites, hello.n_compression_methods);
+
+	TLS_ServerHello(sock, &hello);
 
 	free(hello.compression_methods);
 	free(hello.cipher_suites);
