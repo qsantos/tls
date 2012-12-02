@@ -17,7 +17,7 @@ void TLS_RecordHeader(int sock, uint8_t type, uint16_t length)
 void TLS_HandshakeHeader(int sock, uint8_t type, uint32_t length)
 {
 	TLS_RecordHeader(sock, HANDSHAKE, length + 4);
-	length = htons(length) << 8;
+	length = htons(length << 8);
 	HandshakeHeader tmp;
 	tmp.msg_type = type;
 	memcpy(tmp.length, &length, 3);
@@ -145,17 +145,20 @@ void TLS_Handshake(int sock)
 
 void get_clientHello(int sock)
 {
-	RecordHeader tmp;
-	read(sock, &tmp, sizeof(RecordHeader));
-	printf("%i:%i\n", tmp.version.major, tmp.version.minor);
-	printf("rlen = %i\n", ntohs(tmp.length));
-
-	switch (tmp.type)
+	while (1)
 	{
-	case HANDSHAKE:
-		TLS_Handshake(sock);
-		break;
-	default:
-		printf("Not handshake (%i)\n", tmp.type);
+		RecordHeader tmp;
+		read(sock, &tmp, sizeof(RecordHeader));
+		printf("%i:%i\n", tmp.version.major, tmp.version.minor);
+		printf("rlen = %i\n", ntohs(tmp.length));
+
+		switch (tmp.type)
+		{
+		case HANDSHAKE:
+			TLS_Handshake(sock);
+			break;
+		default:
+			printf("Not handshake (%i)\n", tmp.type);
+		}
 	}
 }
