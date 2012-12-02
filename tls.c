@@ -70,6 +70,11 @@ void TLS_ServerHello(int sock, ClientHello* client_hello)
 	}
 }
 
+void TLS_ServerHelloDone(int sock)
+{
+	TLS_HandshakeHeader(sock, SERVER_HELLO_DONE, 0);
+}
+
 #define READ(V)                    \
 {                                  \
 	read(sock, &V, sizeof(V)); \
@@ -112,6 +117,7 @@ void TLS_ClientHello(int sock, int avail)
 	printf("%i %i %i\n", hello.n_session_id, hello.n_cipher_suites, hello.n_compression_methods);
 
 	TLS_ServerHello(sock, &hello);
+	TLS_ServerHelloDone(sock);
 
 	free(hello.compression_methods);
 	free(hello.cipher_suites);
