@@ -1,5 +1,5 @@
 /*\
- *  This is an awesome programm simulating awesome battles of awesome robot tanks
+ *  Unsecure implementation of TLS
  *  Copyright (C) 2012  Quentin SANTOS
  *
  *  This program is free software: you can redistribute it and/or modify
